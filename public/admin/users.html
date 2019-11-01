@@ -19,7 +19,7 @@
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li><a href="javascript:;"><i class="fa fa-sign-out" id="logout"></i>退出</a></li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -250,22 +250,18 @@
                 type: 'post',
                 url: '/users',
                 data: form,
-                success: function () { },
+                success: function () {
+                  location.reload()
+                 },
                 error: function () {
                   console.log('数据提交失败');
 
                 }
               })
-              show()
               return false;
 
             })
-          })
-          //展示主页面详情页的函数
-
-
-          //利用事件委托实现编辑功能  
-          $('#tbody').on('click', '.edit', function () {
+             $('#tbody').on('click', '.edit', function () {
             //获取当前数据的id
             var id = $(this).attr('data-id');
             
@@ -278,6 +274,7 @@
 
               }
             })
+            //提交表单修改数据
           $('#userEdit').on('submit','#newForm',function(){
             var params = $(this).serialize();
             var id = $(this).attr('data-id');
@@ -301,15 +298,16 @@
               $.ajax({
                 type: 'delete',
                 url: `/users/${id}`,
-                success: function (data) {
-                  location.reload();
+                success: function () {
+                  location.reload();     
                   // console.log(data);
-                  
-
+                          
                 }
               })
             }
           })
+          })
+          //利用事件委托实现编辑功能  
         </script>
 
 </body>

@@ -17,7 +17,7 @@
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li><a href="javascript:;"><i class="fa fa-sign-out"></i>退出</a></li>
       </ul>
     </nav>
     <div class="container-fluid">
@@ -28,16 +28,8 @@
       <div class="page-action">
         <!-- show when multiple checked -->
         <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
-        <form class="form-inline">
-          <select name="" class="form-control input-sm">
-            <option value="">所有分类</option>
-          </select>
-          <select name="" class="form-control input-sm">
-            <option value="">所有状态</option>
-            <option value="">草稿</option>
-            <option value="">已发布</option>
-          </select>
-          <button class="btn btn-default btn-sm">筛选</button>
+        <form class="form-inline" id="form">
+          
         </form>
         <ul class="pagination pagination-sm pull-right">
           <li><a href="#">上一页</a></li>
@@ -58,40 +50,7 @@
             <th class="text-center" width="100">操作</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
+        <tbody id="postBody">
         </tbody>
       </table>
     </div>
@@ -136,6 +95,85 @@
 
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src="../assets/vendors/art-template/template-web.js"></script>
+  <!-- //添加页面展示模板 -->
+  <script type="text/html" id="postsTpl">
+    {{each data}}
+    <tr>
+        <!-- .subStr(0,10).split('-').join('/') -->
+        <td>{{$value.title}}</td>
+        <td>{{$value.author.nickName}}</td>
+        <td>{{$value.category.title}}</td>
+        <td class="text-center">{{$value.category.createAt.substr(0,10).split('-').join('/')}}</td>
+        <td class="text-center">{{$value.state ==  0 ? '草稿':'已发布'}}</td>
+        <td class="text-center">
+          <a href="post-add.html?id={{$value._id}}" class="btn btn-default btn-xs edit">编辑</a>
+          <a href="javascript:;" class="btn btn-danger btn-xs delete" data-id="{{$value._id}}">删除</a>
+        </td>
+      </tr>
+      {{/each}}
+  </script>
+  <script type="text/html" id="formTpl">
+    <select name="" class="form-control input-sm">
+      {{each data}}
+        <option value="{{$value._id}}">{{$value.title}}</option>
+        {{/each}}
+      </select>
+      <select name="state" class="form-control input-sm">
+        <option value=0>草稿</option>
+        <option value=1>已发布</option>
+      </select>
+      <button class="btn btn-default btn-sm">筛选</button>
+    </select>
+  </script>
   <script>NProgress.done()</script>
+  <script>
+    $(function(){
+      //实现文章页面展示功能
+      $.ajax({
+        type:'get',
+        url:'/posts',
+        success:function(data){ 
+          var html = template('postsTpl',{
+            data:data.records  
+          })
+          $('#postBody').html(html)
+          
+        }
+      })
+
+      //实现分类 状态 筛选
+      $.ajax({
+         type:'get',
+         url:'/categories',
+         success:function(data){
+          var html  = template('formTpl',{
+            data:data
+          })
+          $('#form').html(html)
+         }
+      })
+       
+      // // 通过事件委托来添加编辑事件
+      // $('#postBody').on('click','.edit',function(){
+      //   var id = $(this).attr('data-id')
+        
+        
+      // })
+
+      //实现用户删除功能
+      $('#postBody').on('click','.delete',function(){
+        var id = $(this).attr('data-id')
+        $.ajax({
+          type:'delete',
+          url:'/posts/'+id,
+          success:function(){
+            location.reload()
+          }
+        })
+        
+      })
+    })
+  </script>
 </body>
 </html>

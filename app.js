@@ -29,7 +29,7 @@ app.use(formidableMiddleware({
 }));
 
 // 数据库连接
-mongoose.connect('mongodb://itcast:itcast@localhost:27017/alibaixiu', { useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect('mongodb://itcast:itcast@localhost:27017/alibaixiu', { useNewUrlParser: true, useFindAndModify: true,useUnifiedTopology:true})
 	.then(() => console.log('数据库连接成功'))
 	.catch(() => console.log('数据库连接失败'));
 

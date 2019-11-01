@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <title>Add new post &laquo; Admin</title>
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -17,10 +19,10 @@
       <button class="btn btn-default navbar-btn fa fa-bars"></button>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="profile.html"><i class="fa fa-user"></i>个人中心</a></li>
-        <li><a href="login.html"><i class="fa fa-sign-out"></i>退出</a></li>
+        <li><a href="javascript:;"><i class="fa fa-sign-out"></i>退出</a></li>
       </ul>
     </nav>
-    <div class="container-fluid">
+    <div class="container-fluid" id="postsAll">
       <div class="page-title">
         <h1>写文章</h1>
       </div>
@@ -28,7 +30,7 @@
       <!-- <div class="alert alert-danger">
         <strong>错误！</strong>发生XXX错误
       </div> -->
-      <form class="row">
+      <form class="row" id="postForm">
         <div class="col-md-9">
           <div class="form-group">
             <label for="title">标题</label>
@@ -36,32 +38,32 @@
           </div>
           <div class="form-group">
             <label for="content">标题</label>
-            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10" placeholder="内容"></textarea>
+            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10"
+              placeholder="内容"></textarea>
           </div>
         </div>
         <div class="col-md-3">
           <div class="form-group">
             <label for="feature">特色图像</label>
             <!-- show when image chose -->
-            <img class="help-block thumbnail" style="display: none">
+            <img class="help-block thumbnail" style="display: none" id="img">
             <input id="feature" class="form-control" name="feature" type="file">
+            <input type="hidden" name="thumbnail" id="hidden">
           </div>
           <div class="form-group">
             <label for="category">所属分类</label>
             <select id="category" class="form-control" name="category">
-              <option value="1">未分类</option>
-              <option value="2">潮生活</option>
             </select>
           </div>
           <div class="form-group">
             <label for="created">发布时间</label>
-            <input id="created" class="form-control" name="created" type="datetime-local">
+            <input id="created" class="form-control" name="createAt" type="datetime-local">
           </div>
           <div class="form-group">
             <label for="status">状态</label>
-            <select id="status" class="form-control" name="status">
-              <option value="drafted">草稿</option>
-              <option value="published">已发布</option>
+            <select id="status" class="form-control" name="state">
+              <option value=0>草稿</option>
+              <option value=1>已发布</option>
             </select>
           </div>
           <div class="form-group">
@@ -111,6 +113,169 @@
 
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src="../assets/vendors/art-template/template-web.js"></script>
   <script>NProgress.done()</script>
+  <script type="text/html" id="addTPl">
+    {{each data}}
+    <option value="{{$value._id}}">{{$value.title}}</option>
+    {{/each}}
+  </script>
+  <!-- //文章编辑模板 -->
+  <script type="text/html" id="editTpl">
+    <div class="page-title">
+        <h1>写文章</h1>
+      </div>
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong>发生XXX错误
+      </div> -->
+      <form class="row" id="newForm" data-id="{{data._id}}">
+        <div class="col-md-9">
+          <div class="form-group">
+            <label for="title">标题</label>
+            <input id="title" class="form-control input-lg" name="title" value="{{data.title}}"　type="text" placeholder="文章标题">
+          </div>
+          <div class="form-group">
+            <label for="content">标题</label>
+            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10"
+              placeholder="内容">{{data.content}}</textarea>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="feature">特色图像</label>
+            <!-- show when image chose -->
+            {{if data.thumbnail}}
+            <img class="help-block thumbnail" src="{{data.thumbnail}}" id="img">
+            {{else}}
+            <img class="help-block thumbnail" style="display: none" id="img">
+            {{/if}}
+            <input id="feature" class="form-control" name="feature" type="file">
+            <input type="hidden" name="thumbnail" id="hidden" value="{{data.thumbnail}}" >
+          </div>
+          <div class="form-group">
+            <label for="category">所属分类</label>
+            <select id="category" class="form-control" name="category">
+              <option value=""></option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="created">发布时间</label>
+            <input id="created" class="form-control" name="createAt" type="datetime-local">
+          </div>
+          <div class="form-group">
+            <label for="status">状态</label>
+            <select id="status" class="form-control" name="state">
+              <option value=0 {{data.state==0? 'checked':''}}>草稿</option>
+              <option value=1 {{data.state==1? 'checked':''}}>已发布</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+  </script>
+  <script>
+    
+
+    //实现文件上传功能
+    $('#postsAll').on('change','#feature', function () {
+      var formData = new FormData();
+      formData.append('cover', this.files[0])
+      $.ajax({
+        type: 'post',
+        url: '/upload',
+        data: formData,
+        //告诉ajax方法不要处理data属性对应的参数
+        processData: false,
+        //告诉ajax方法不要设置参数类型
+        contentType: false,
+        success: function (data) {
+          $('#img').attr('src', data[0].cover).css('display', 'block')
+          $('#hidden').val(data[0].cover)
+        }
+      })
+    })
+
+    //判断当前连接是添加功能还是修改功能
+    var state = location.search.substr(1).split('=')[1];
+    console.log(state);
+    if (state) {
+      //获取分类列表
+    $.ajax({
+      type: 'get',
+      url: '/categories',
+      success: function (data) {
+        var html = template('addTPl', {
+          data: data
+        })
+        $('#postsAll').find('#category').html(html)
+      }
+    })
+
+      //实现文章的编辑功能
+      //发送ajax请求 获取数据
+      $.ajax({
+        type:'get',
+        url:`/posts/${state}`,
+        success:function(data){
+          var html = template('editTpl',{
+            data:data
+          })
+          $('#postsAll').html(html)
+          $.ajax({
+         type:'get',
+         url:'/categories',
+         success:function(data){
+           
+         }
+       })
+        }
+      })
+      //实现文章修改
+    $('#postsAll').on('submit','#newForm', function () {
+        var params = $(this).serialize();
+        var id = $(this).attr('data-id')
+        $.ajax({
+          type: 'put',
+          url: '//posts/'+id,
+          data: params,
+          success: function (data) {
+            location.href = '/admin/posts.html'
+          }
+        })
+        return false;
+      })
+    }
+    else {
+      //获取分类列表
+    $.ajax({
+      type: 'get',
+      url: '/categories',
+      success: function (data) {
+        var html = template('addTPl', {
+          data: data
+        })
+        $('#postsAll').find('#category').html(html)
+      }
+    })
+
+      //实现文章添加功能
+      $('#postsAll').on('submit','#postForm', function () {
+        var params = $(this).serialize();
+        $.ajax({
+          type: 'post',
+          url: '/posts',
+          data: params,
+          success: function (data) {
+            location.href = '/admin/posts.html'
+          }
+        })
+        return false;
+      })
+    }
+  </script>
 </body>
+
 </html>
